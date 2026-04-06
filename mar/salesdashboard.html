@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard ยอดขายประจำเดือน มีนาคม</title>
+    <!-- Tailwind CSS สำหรับจัดรูปแบบให้สวยงามและ Responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js สำหรับวาดกราฟ -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts: Prompt -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome สำหรับ Icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: #f1f5f9;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto space-y-6">
+        
+        <!-- Header Section -->
+        <header class="flex flex-col md:flex-row justify-between items-center bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg animate-fade-in">
+            <div class="flex items-center space-x-4 mb-4 md:mb-0">
+                <div class="bg-white p-3 rounded-full text-blue-600">
+                    <i class="fas fa-chart-line text-3xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold">รายงานสรุปผลยอดขายประจำเดือน มีนาคม</h1>
+                    <p class="text-blue-100 mt-1">บริษัท พัฒนาสิน ไทยเทรดดิ้ง จำกัด</p>
+                </div>
+            </div>
+            
+            <!-- Filter Dropdown -->
+            <div class="w-full md:w-auto flex items-center bg-white/20 p-2 rounded-xl backdrop-blur-sm">
+                <label for="branchSelect" class="mr-3 font-medium text-white whitespace-nowrap"><i class="fas fa-filter mr-1"></i> เลือกรายการ:</label>
+                <select id="branchSelect" class="w-full md:w-48 bg-white text-slate-800 rounded-lg px-4 py-2 font-medium focus:outline-none focus:ring-2 focus:ring-blue-300 shadow-sm transition-all cursor-pointer">
+                    <option value="รวม">ยอดรวมทั้งหมด</option>
+                    <option value="ขายปลีก">ขายปลีก</option>
+                    <option value="ขายส่ง">ขายส่ง</option>
+                    <option value="หนองคาย">หนองคาย</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- KPI Cards Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in" style="animation-delay: 0.1s;">
+            <!-- ยอดขายทำได้ -->
+            <div class="glass-card rounded-2xl p-6 border-l-4 border-l-blue-500 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 rounded-full bg-blue-100 opacity-50 group-hover:scale-150 transition-transform duration-500 ease-in-out"></div>
+                <div class="relative z-10">
+                    <p class="text-sm font-semibold text-slate-500 mb-1">ยอดขายที่ทำได้ (บาท)</p>
+                    <h3 id="kpi-actual" class="text-3xl font-bold text-blue-600 mb-2">0</h3>
+                    <div class="flex items-center text-sm text-slate-600">
+                        <i class="fas fa-coins mr-2 text-blue-400"></i> ยอดจริงประจำเดือน
+                    </div>
+                </div>
+            </div>
+
+            <!-- เป้าหมาย -->
+            <div class="glass-card rounded-2xl p-6 border-l-4 border-l-purple-500 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 rounded-full bg-purple-100 opacity-50 group-hover:scale-150 transition-transform duration-500 ease-in-out"></div>
+                <div class="relative z-10">
+                    <p class="text-sm font-semibold text-slate-500 mb-1">เป้าหมาย (บาท)</p>
+                    <h3 id="kpi-target" class="text-3xl font-bold text-purple-600 mb-2">0</h3>
+                    <div class="flex items-center text-sm text-slate-600">
+                        <i class="fas fa-bullseye mr-2 text-purple-400"></i> เป้าหมายที่ตั้งไว้
+                    </div>
+                </div>
+            </div>
+
+            <!-- % ความสำเร็จ -->
+            <div class="glass-card rounded-2xl p-6 border-l-4 border-l-emerald-500 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 rounded-full bg-emerald-100 opacity-50 group-hover:scale-150 transition-transform duration-500 ease-in-out"></div>
+                <div class="relative z-10">
+                    <p class="text-sm font-semibold text-slate-500 mb-1">เปอร์เซ็นต์ความสำเร็จ</p>
+                    <div class="flex items-end space-x-2 mb-2">
+                        <h3 id="kpi-percent" class="text-3xl font-bold text-emerald-500">0%</h3>
+                        <span id="kpi-percent-icon" class="text-xl mb-1"></span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 mb-1">
+                        <div id="kpi-progress-bar" class="bg-emerald-500 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- จำนวนวันที่ได้ตามเป้า -->
+            <div class="glass-card rounded-2xl p-6 border-l-4 border-l-amber-500 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 rounded-full bg-amber-100 opacity-50 group-hover:scale-150 transition-transform duration-500 ease-in-out"></div>
+                <div class="relative z-10">
+                    <p class="text-sm font-semibold text-slate-500 mb-1">จำนวนวันที่ได้ตามเป้า</p>
+                    <h3 class="text-3xl font-bold text-amber-500 mb-2"><span id="kpi-days">0</span> <span class="text-lg text-slate-400 font-medium">/ 26 วัน</span></h3>
+                    <div class="flex items-center text-sm text-slate-600">
+                        <i class="far fa-calendar-check mr-2 text-amber-400"></i> ยอดสะสม <span id="kpi-daily" class="font-bold ml-1 text-slate-700">0</span>/วัน
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in" style="animation-delay: 0.2s;">
+            <!-- Bar Chart (เปรียบเทียบ ทำได้ vs เป้าหมาย) -->
+            <div class="glass-card rounded-2xl p-6 lg:col-span-2">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-slate-700">กราฟวิเคราะห์ปริมาณยอดขาย และ อัตราความสำเร็จ</h2>
+                    <span id="chart-badge" class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">ทั้งหมด</span>
+                </div>
+                <div class="relative h-[300px] w-full">
+                    <canvas id="mainChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Doughnut Chart (สัดส่วนยอดขาย) -->
+            <div class="glass-card rounded-2xl p-6">
+                <h2 class="text-xl font-bold text-slate-700 mb-4 text-center">สัดส่วนความสำเร็จ</h2>
+                <div class="relative h-[250px] w-full flex justify-center items-center">
+                    <canvas id="doughnutChart"></canvas>
+                    <!-- Center Text in Doughnut -->
+                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-4">
+                        <span class="text-sm text-slate-500">สำเร็จ</span>
+                        <span id="donut-center-text" class="text-2xl font-bold text-slate-800">0%</span>
+                    </div>
+                </div>
+                <div class="mt-4 text-center">
+                    <p id="donut-bottom-text" class="text-sm text-slate-500">เทียบจากเป้าหมายที่ตั้งไว้</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analysis Section -->
+        <div class="glass-card rounded-2xl p-6 animate-fade-in" style="animation-delay: 0.25s;">
+            <h2 class="text-xl font-bold text-slate-800 mb-4"><i class="fas fa-lightbulb text-amber-500 mr-2"></i>บทวิเคราะห์ผลยอดขายเบื้องต้น (Executive Summary)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white/60 p-4 rounded-xl border border-slate-100 shadow-sm transition-all hover:shadow-md">
+                    <h3 class="font-bold text-blue-700 mb-1"><i class="fas fa-bullseye mr-2"></i>ภาพรวมบริษัท (Overall Performance)</h3>
+                    <p class="text-sm text-slate-600">ยอดขายรวมทำได้ <span class="font-bold text-slate-800">13.88 ล้านบาท (99.2%)</span> อยู่ในเกณฑ์ดีเยี่ยม ขาดอีกเพียงเล็กน้อยจะบรรลุเป้าหมาย 14 ล้านบาท การบริหารจัดการภาพรวมยังคงแข็งแกร่ง</p>
+                </div>
+                <div class="bg-white/60 p-4 rounded-xl border border-emerald-100 shadow-sm transition-all hover:shadow-md">
+                    <h3 class="font-bold text-emerald-700 mb-1"><i class="fas fa-star mr-2"></i>ดาวรุ่งทำเงิน (Star Performer)</h3>
+                    <p class="text-sm text-slate-600"><span class="font-bold text-slate-800">สาขาหนองคาย</span> ทำผลงานโดดเด่นสุด ทะลุเป้าสูงถึง <span class="font-bold text-emerald-600">138%</span> และทำยอดทะลุเป้ารายวันได้ถึง 12 วัน ควรนำกลยุทธ์พื้นที่นี้ไปถอดบทเรียน</p>
+                </div>
+                <div class="bg-white/60 p-4 rounded-xl border border-indigo-100 shadow-sm transition-all hover:shadow-md">
+                    <h3 class="font-bold text-indigo-700 mb-1"><i class="fas fa-sack-dollar mr-2"></i>เสาหลักค้ำจุนรายได้ (Cash Cow)</h3>
+                    <p class="text-sm text-slate-600"><span class="font-bold text-slate-800">ช่องทางขายส่ง</span> เป็นสัดส่วนรายได้ใหญ่ที่สุด (กว่า 90%) ทำยอดได้ 12.59 ล้านบาท (98.4%) ฐานลูกค้า B2B มีความมั่นคงสูง ควรรักษาความสัมพันธ์อย่างต่อเนื่อง</p>
+                </div>
+                <div class="bg-white/60 p-4 rounded-xl border border-rose-100 shadow-sm transition-all hover:shadow-md">
+                    <h3 class="font-bold text-rose-700 mb-1"><i class="fas fa-triangle-exclamation mr-2"></i>จุดที่ต้องเฝ้าระวัง (Area for Improvement)</h3>
+                    <p class="text-sm text-slate-600"><span class="font-bold text-slate-800">ช่องทางขายปลีก</span> ทำยอดได้ต่ำกว่ามาตรฐาน (<span class="font-bold text-rose-600">77.9%</span>) และได้ตามเป้าเพียง 4 วัน ควรพิจารณาจัดโปรโมชั่นกระตุ้นยอดขาย หรือวิเคราะห์พฤติกรรมลูกค้ารายย่อยเพิ่มเติม</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Table Section -->
+        <div class="animate-fade-in" style="animation-delay: 0.3s;">
+            <div class="flex flex-col md:flex-row justify-between items-end md:items-center mb-6 px-2 mt-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800"><i class="fas fa-chart-pie text-blue-600 mr-2"></i>สถิติยอดขายและอัตราความสำเร็จรายสาขา</h2>
+                    <p class="text-slate-500 mt-1">วิเคราะห์ประสิทธิภาพเชิงลึกเทียบกับเป้าหมายที่ตั้งไว้</p>
+                </div>
+                <span class="bg-slate-200 text-slate-700 text-sm font-semibold px-4 py-1.5 rounded-full mt-3 md:mt-0 shadow-sm border border-slate-300">รอบบิล มีนาคม (26 วันทำงาน)</span>
+            </div>
+            <div class="overflow-x-auto pb-6">
+                <table class="w-full text-left border-separate" style="border-spacing: 0 0.75rem;">
+                    <thead>
+                        <tr class="text-slate-500 text-sm uppercase tracking-wider">
+                            <th class="px-6 py-2 font-semibold">ช่องทาง / สาขา</th>
+                            <th class="px-6 py-2 font-semibold text-right">ยอดสุทธิ (บาท)</th>
+                            <th class="px-6 py-2 font-semibold text-right text-emerald-600">เป้าหมาย (บาท)</th>
+                            <th class="px-6 py-2 font-semibold text-right">เป้าเฉลี่ยต่อวัน</th>
+                            <th class="px-6 py-2 font-semibold text-center">ทะลุเป้า (วัน)</th>
+                            <th class="px-6 py-2 font-semibold text-center">ความสำเร็จ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Table rows will be populated by JS -->
+                    </tbody>
+                    <tfoot id="table-foot">
+                        <!-- Table footer will be populated by JS -->
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="text-center text-sm text-slate-400 mt-4 pb-4">
+
+    <script>
+        // ข้อมูลดิบจากภาพ
+        const salesData = {
+            "รวม": { actual: 13888828, target: 14000000, daily: 538462, days: 26 },
+            "ขายปลีก": { actual: 467577, target: 600000, daily: 23077, days: 4 },
+            "ขายส่ง": { actual: 12592895, target: 12800000, daily: 492308, days: 10 },
+            "หนองคาย": { actual: 828356, target: 600000, daily: 23077, days: 12 }
+        };
+
+        // Format ตัวเลขให้มีลูกน้ำ
+        const formatNumber = (num) => {
+            return num.toLocaleString('th-TH');
+        };
+
+        // กราฟ Instances
+        let mainChartInstance = null;
+        let doughnutChartInstance = null;
+
+        // ฟังก์ชันอัปเดต KPI Cards
+        const updateKPIs = (branch) => {
+            const data = salesData[branch];
+            const percent = ((data.actual / data.target) * 100).toFixed(1);
+
+            // Animate Numbers (Simple replace for now, can add counting animation if needed)
+            document.getElementById('kpi-actual').innerText = formatNumber(data.actual);
+            document.getElementById('kpi-target').innerText = formatNumber(data.target);
+            document.getElementById('kpi-percent').innerText = percent + '%';
+            document.getElementById('kpi-days').innerText = data.days;
+            document.getElementById('kpi-daily').innerText = formatNumber(data.daily);
+
+            // Update Progress Bar
+            const progressBar = document.getElementById('kpi-progress-bar');
+            let displayPercent = percent > 100 ? 100 : percent;
+            progressBar.style.width = displayPercent + '%';
+
+            // Update Colors based on performance
+            const percentText = document.getElementById('kpi-percent');
+            const percentIcon = document.getElementById('kpi-percent-icon');
+            const percentCardBorder = percentText.closest('.glass-card');
+            
+            if (percent >= 100) {
+                percentText.className = 'text-3xl font-bold text-emerald-500';
+                progressBar.className = 'bg-emerald-500 h-2.5 rounded-full';
+                percentIcon.innerHTML = '<i class="fas fa-arrow-trend-up text-emerald-500"></i>';
+                percentCardBorder.className = 'glass-card rounded-2xl p-6 border-l-4 border-l-emerald-500 relative overflow-hidden group';
+            } else if (percent >= 80) {
+                percentText.className = 'text-3xl font-bold text-amber-500';
+                progressBar.className = 'bg-amber-500 h-2.5 rounded-full';
+                percentIcon.innerHTML = '<i class="fas fa-minus text-amber-500"></i>';
+                percentCardBorder.className = 'glass-card rounded-2xl p-6 border-l-4 border-l-amber-500 relative overflow-hidden group';
+            } else {
+                percentText.className = 'text-3xl font-bold text-rose-500';
+                progressBar.className = 'bg-rose-500 h-2.5 rounded-full';
+                percentIcon.innerHTML = '<i class="fas fa-arrow-trend-down text-rose-500"></i>';
+                percentCardBorder.className = 'glass-card rounded-2xl p-6 border-l-4 border-l-rose-500 relative overflow-hidden group';
+            }
+        };
+
+        // ฟังก์ชันอัปเดตตาราง
+        const updateTable = (selectedBranch) => {
+            const tbody = document.getElementById('table-body');
+            const tfoot = document.getElementById('table-foot');
+            tbody.innerHTML = '';
+            tfoot.innerHTML = '';
+
+            const branches = ['ขายปลีก', 'ขายส่ง', 'หนองคาย'];
+            
+            branches.forEach(branch => {
+                const d = salesData[branch];
+                const pct = ((d.actual / d.target) * 100).toFixed(1);
+                
+                // รูปแบบ Card Style + Fade Effect เวลาไม่ได้ถูกเลือก
+                const isSelected = selectedBranch === branch || selectedBranch === 'รวม';
+                const opacityClass = isSelected ? 'opacity-100 scale-100' : 'opacity-40 grayscale-[30%] scale-[0.99]';
+                const rowBg = selectedBranch === branch ? 'bg-blue-50 ring-2 ring-blue-400 shadow-md z-10 relative' : 'bg-white shadow-sm hover:shadow-md';
+                
+                let pctClass = pct >= 100 ? 'text-emerald-700 bg-emerald-100 ring-1 ring-emerald-300' : (pct >= 80 ? 'text-amber-700 bg-amber-100 ring-1 ring-amber-300' : 'text-rose-700 bg-rose-100 ring-1 ring-rose-300');
+
+                tbody.innerHTML += `
+                    <tr class="transition-all duration-300 ease-in-out ${opacityClass}">
+                        <td class="${rowBg} rounded-l-2xl px-6 py-5 font-bold text-slate-800 text-lg border-y border-l border-slate-100">${branch}</td>
+                        <td class="${rowBg} px-6 py-5 text-right font-semibold text-rose-600 border-y border-slate-100">${formatNumber(d.actual)}</td>
+                        <td class="${rowBg} px-6 py-5 text-right font-bold text-emerald-600 bg-emerald-50/20 border-y border-slate-100">${formatNumber(d.target)}</td>
+                        <td class="${rowBg} px-6 py-5 text-right text-slate-500 border-y border-slate-100">${formatNumber(d.daily)}</td>
+                        <td class="${rowBg} px-6 py-5 text-center font-medium text-slate-700 border-y border-slate-100">${d.days} <span class="text-xs text-slate-400 font-normal">/ 26</span></td>
+                        <td class="${rowBg} rounded-r-2xl px-6 py-5 text-center border-y border-r border-slate-100">
+                            <span class="px-4 py-1.5 rounded-full text-sm font-bold ${pctClass}">${pct}%</span>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // Footer (ยอดรวม) สไตล์โดดเด่นสะดุดตา
+            const total = salesData['รวม'];
+            const totalPct = ((total.actual / total.target) * 100).toFixed(1);
+            let totalPctClass = totalPct >= 100 ? 'text-emerald-900 bg-emerald-300' : 'text-blue-900 bg-blue-300';
+
+            tfoot.innerHTML = `
+                <tr class="group">
+                    <td class="bg-slate-800 rounded-l-2xl px-6 py-6 font-bold text-xl text-white shadow-xl transition-all group-hover:bg-slate-900">รวมทั้งหมด</td>
+                    <td class="bg-slate-800 px-6 py-6 text-right font-bold text-xl text-white shadow-xl transition-all group-hover:bg-slate-900">${formatNumber(total.actual)}</td>
+                    <td class="bg-slate-800 px-6 py-6 text-right font-bold text-xl text-emerald-300 shadow-xl transition-all group-hover:bg-slate-900">${formatNumber(total.target)}</td>
+                    <td class="bg-slate-800 px-6 py-6 text-right font-medium text-slate-400 shadow-xl transition-all group-hover:bg-slate-900">${formatNumber(total.daily)}</td>
+                    <td class="bg-slate-800 px-6 py-6 text-center font-medium text-slate-300 shadow-xl transition-all group-hover:bg-slate-900">${total.days}</td>
+                    <td class="bg-slate-800 rounded-r-2xl px-6 py-6 text-center shadow-xl transition-all group-hover:bg-slate-900">
+                        <span class="px-5 py-2 rounded-full text-base font-bold ${totalPctClass} shadow-inner">${totalPct}%</span>
+                    </td>
+                </tr>
+            `;
+        };
+
+        // ฟังก์ชันวาด/อัปเดตกราฟ
+        const updateCharts = (branch) => {
+            document.getElementById('chart-badge').innerText = branch;
+            
+            let labels = [];
+            let actualData = [];
+            let targetData = [];
+
+            if (branch === 'รวม') {
+                labels = ['ขายปลีก', 'ขายส่ง', 'หนองคาย'];
+                labels.forEach(l => {
+                    actualData.push(salesData[l].actual);
+                    targetData.push(salesData[l].target);
+                });
+            } else {
+                labels = [branch];
+                actualData = [salesData[branch].actual];
+                targetData = [salesData[branch].target];
+            }
+
+            // --- Main Bar Chart (Combo Chart: Volume + %) ---
+            const mainCtx = document.getElementById('mainChart').getContext('2d');
+            
+            if (mainChartInstance) mainChartInstance.destroy();
+
+            // คำนวณ % ความสำเร็จสำหรับวาดเส้น Line Chart
+            const percentData = actualData.map((val, index) => ((val / targetData[index]) * 100).toFixed(1));
+
+            mainChartInstance = new Chart(mainCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            type: 'line',
+                            label: 'ความสำเร็จ (%)',
+                            data: percentData,
+                            borderColor: '#ea580c', // สีส้มเด่นชัด (orange-600)
+                            backgroundColor: '#fff',
+                            borderWidth: 3,
+                            pointBackgroundColor: '#ea580c',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                            yAxisID: 'yPercent',
+                            tension: 0.3, // ทำให้เส้นโค้งสมูทขึ้น
+                            order: 1 // ให้อยู่เลเยอร์บนสุด
+                        },
+                        {
+                            type: 'bar',
+                            label: 'ทำได้จริง (บาท)',
+                            data: actualData,
+                            backgroundColor: 'rgba(59, 130, 246, 0.85)', // สีฟ้า (blue-500)
+                            borderRadius: 4,
+                            barPercentage: 0.6,
+                            categoryPercentage: 0.8,
+                            yAxisID: 'yBaht',
+                            order: 2
+                        },
+                        {
+                            type: 'bar',
+                            label: 'เป้าหมาย (บาท)',
+                            data: targetData,
+                            backgroundColor: 'rgba(226, 232, 240, 0.8)', // สีเทาอ่อนเป็นฐานเปรียบเทียบ (slate-200)
+                            borderRadius: 4,
+                            barPercentage: 0.6,
+                            categoryPercentage: 0.8,
+                            yAxisID: 'yBaht',
+                            order: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index', // เวลาชี้เมาส์ให้รวบแสดงข้อมูลทั้ง 3 ค่าพร้อมกัน
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: { 
+                            position: 'top', 
+                            labels: { font: { family: 'Prompt' }, usePointStyle: true, padding: 20 } 
+                        },
+                        tooltip: {
+                            titleFont: { family: 'Prompt', size: 14 },
+                            bodyFont: { family: 'Prompt', size: 13 },
+                            padding: 12,
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.dataset.yAxisID === 'yPercent') {
+                                        return ` ${context.dataset.label}: ${context.raw}%`;
+                                    } else {
+                                        return ` ${context.dataset.label}: ${formatNumber(context.raw)} บาท`;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            ticks: { font: { family: 'Prompt', size: 13, weight: '500' } },
+                            grid: { display: false }
+                        },
+                        yBaht: { 
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: 'ยอดเงิน (บาท)', font: { family: 'Prompt', size: 12 }, color: '#64748b' },
+                            beginAtZero: true, 
+                            ticks: { 
+                                font: { family: 'Prompt' },
+                                color: '#64748b',
+                                callback: function(value) {
+                                    if(value >= 1000000) return (value / 1000000) + 'M';
+                                    if(value >= 1000) return (value / 1000) + 'k';
+                                    return value;
+                                }
+                            },
+                            grid: { color: 'rgba(0,0,0,0.05)', borderDash: [5, 5] }
+                        },
+                        yPercent: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { display: true, text: 'อัตราความสำเร็จ (%)', font: { family: 'Prompt', size: 12 }, color: '#ea580c' },
+                            beginAtZero: true,
+                            min: 0,
+                            // เผื่อพื้นที่ด้านบนกราฟให้เส้นไม่ชนขอบ
+                            suggestedMax: Math.max(...percentData) > 100 ? Math.max(...percentData) + 20 : 120,
+                            ticks: { 
+                                font: { family: 'Prompt', weight: 'bold' },
+                                color: '#ea580c',
+                                callback: function(value) { return value + '%'; }
+                            },
+                            grid: { display: false } // ซ่อนเส้นกริดของแกน % ไม่ให้รก
+                        }
+                    }
+                }
+            });
+
+            // --- Doughnut Chart ---
+            const dCtx = document.getElementById('doughnutChart').getContext('2d');
+            const dData = salesData[branch];
+            const percentComplete = (dData.actual / dData.target) * 100;
+            const remaining = percentComplete >= 100 ? 0 : 100 - percentComplete;
+            
+            let donutColor = percentComplete >= 100 ? '#10b981' : (percentComplete >= 80 ? '#f59e0b' : '#3b82f6');
+            document.getElementById('donut-center-text').innerText = percentComplete.toFixed(1) + '%';
+            document.getElementById('donut-center-text').style.color = donutColor;
+            
+            let donutSubText = percentComplete >= 100 ? 'บรรลุเป้าหมายแล้ว! 🎉' : 'จากเป้าหมาย 100%';
+            document.getElementById('donut-bottom-text').innerText = branch === 'รวม' ? 'สัดส่วนยอดรวมทั้งหมด' : donutSubText;
+
+            if (doughnutChartInstance) doughnutChartInstance.destroy();
+
+            doughnutChartInstance = new Chart(dCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['ทำได้แล้ว', 'ส่วนที่ขาด'],
+                    datasets: [{
+                        data: [percentComplete, remaining],
+                        backgroundColor: [donutColor, '#e2e8f0'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.raw.toFixed(1) + '%';
+                                }
+                            },
+                            titleFont: { family: 'Prompt' },
+                            bodyFont: { family: 'Prompt' }
+                        }
+                    }
+                }
+            });
+        };
+
+        // Event Listener เมื่อเปลี่ยน Dropdown
+        document.getElementById('branchSelect').addEventListener('change', function(e) {
+            const selected = e.target.value;
+            updateKPIs(selected);
+            updateTable(selected);
+            updateCharts(selected);
+        });
+
+        // Initialize เมื่อเปิดหน้าเว็บ
+        window.onload = () => {
+            Chart.defaults.font.family = "'Prompt', sans-serif";
+            updateKPIs('รวม');
+            updateTable('รวม');
+            updateCharts('รวม');
+        };
+
+    </script>
+<a href="deliverydashboard.html" style="position: fixed; bottom: 20px; right: 20px; background-color: #0d6efd; color: white; padding: 10px 20px; text-decoration: none; border-radius: 30px; font-weight: bold; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); z-index: 9999;">
+    หน้าถัดไป (Delivery) ➜
+
+</body>
+</html>
